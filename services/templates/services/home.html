@@ -1,0 +1,70 @@
+{% extends 'services/base.html' %}
+
+{% block title %}Главная — Metock{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Видео</h1>
+
+{% if videos %}
+    {% for video in videos %}
+        <div class="video-card">
+            <video controls preload="metadata" poster="{% if video.thumbnail %}{{ video.thumbnail.url }}{% endif %}">
+                <source src="{{ video.video_file.url }}" type="video/mp4" />
+                Ваш браузер не поддерживает видео.
+            </video>
+            <div class="card-body">
+                <h5 class="card-title">{{ video.description|default:"Без описания" }}</h5>
+                <p class="card-text text-muted small mb-2">
+                    Создатель: {{ video.creator.username }} |
+                    Дата: {{ video.created_date|date:"d.m.Y H:i" }} |
+                    Просмотры: {{ video.count_views }} |
+                    Лайки: {{ video.total_likes }}
+                </p>
+
+                <form method="post" action="{% url 'like_video' video.id %}" class="d-inline">
+                    {% csrf_token %}
+                    {% if user in video.likes.all %}
+                        <button type="submit" class="btn btn-outline-danger me-2">
+                            <i class="bi bi-heart-fill"></i> Убрать лайк
+                        </button>
+                    {% else %}
+                        <button type="submit" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-heart"></i> Лайк
+                        </button>
+                    {% endif %}
+                </form>
+
+                <h6 class="mt-4">Комментарии:</h6>
+                <ul class="comment-list list-unstyled">
+                    {% for comment in video.comments.all %}
+                        <li><strong>{{ comment.user.username }}:</strong> {{ comment.text }}</li>
+                    {% empty %}
+                        <li>Комментариев пока нет.</li>
+                    {% endfor %}
+                </ul>
+
+                <form method="post" action="{% url 'add_comment' video.id %}" class="mt-3">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="text" class="form-control" placeholder="Напишите комментарий..." required rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-sm">Добавить комментарий</button>
+                </form>
+
+                {% if user == video.creator %}
+                    <div class="mt-3">
+                        <a href="{% url 'video_edit' video.id %}" class="btn btn-warning btn-sm me-2">
+                            <i class="bi bi-pencil-square"></i> Редактировать
+                        </a>
+                        <a href="{% url 'video_delete' video.id %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Удалить
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted">Пока нет доступных видео.</p>
+{% endif %}
+{% endblock %}
