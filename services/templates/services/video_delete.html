@@ -1,4 +1,5 @@
 {% extends 'services/base.html' %}
+{% load widget_tweaks %}
 
 {% block title %}Удалить видео — Metock{% endblock %}
 
@@ -19,7 +20,7 @@
                         <button type="submit" class="btn btn-danger rounded-pill px-4 py-2">
                             Да, удалить
                         </button>
-                        <a href="{% url 'home' %}" class="btn btn-secondary rounded-pill px-4 py-2">
+                        <a href="{% url 'video_view' %}" class="btn btn-secondary rounded-pill px-4 py-2">
                             Отмена
                         </a>
                     </div>

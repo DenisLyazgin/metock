@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.http import JsonResponse
 
 from .models import Video, Comments
 
@@ -36,9 +37,14 @@ def like_video(request, video_id):
     video = get_object_or_404(Video, id=video_id)
     if request.user in video.likes.all():
         video.likes.remove(request.user)
+        liked = False
     else:
         video.likes.add(request.user)
-    return redirect('video_view')
+        liked = True
+    return JsonResponse({
+        'liked': liked,
+        'likes_count': video.likes.count()
+    })
 
 
 @login_required

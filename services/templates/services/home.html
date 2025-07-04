@@ -7,32 +7,32 @@
 
 {% if videos %}
     {% for video in videos %}
-        <div class="video-card">
-            <video controls preload="metadata" poster="{% if video.thumbnail %}{{ video.thumbnail.url }}{% endif %}">
+        <div class="video-card mb-4">
+            <video controls preload="metadata"
+                   class="w-100"
+                   style="max-width: 600px; height: auto;"
+                   poster="{% if video.thumbnail %}{{ video.thumbnail.url }}{% endif %}">
                 <source src="{{ video.video_file.url }}" type="video/mp4" />
                 Ваш браузер не поддерживает видео.
             </video>
+
             <div class="card-body">
                 <h5 class="card-title">{{ video.description|default:"Без описания" }}</h5>
                 <p class="card-text text-muted small mb-2">
                     Создатель: {{ video.creator.username }} |
                     Дата: {{ video.created_date|date:"d.m.Y H:i" }} |
                     Просмотры: {{ video.count_views }} |
-                    Лайки: {{ video.total_likes }}
+                    Лайки: <span class="likes-count" data-video-id="{{ video.id }}">{{ video.likes.count }}</span>
                 </p>
 
-                <form method="post" action="{% url 'like_video' video.id %}" class="d-inline">
-                    {% csrf_token %}
+                <button class="btn btn-outline-primary btn-like"
+                        data-video-id="{{ video.id }}">
                     {% if user in video.likes.all %}
-                        <button type="submit" class="btn btn-outline-danger me-2">
-                            <i class="bi bi-heart-fill"></i> Убрать лайк
-                        </button>
+                        <i class="bi bi-heart-fill"></i> Убрать лайк
                     {% else %}
-                        <button type="submit" class="btn btn-outline-primary me-2">
-                            <i class="bi bi-heart"></i> Лайк
-                        </button>
+                        <i class="bi bi-heart"></i> Лайк
                     {% endif %}
-                </form>
+                </button>
 
                 <h6 class="mt-4">Комментарии:</h6>
                 <ul class="comment-list list-unstyled">
@@ -67,4 +67,46 @@
 {% else %}
     <p class="text-muted">Пока нет доступных видео.</p>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-like').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const videoId = this.getAttribute('data-video-id');
+            fetch(`/like/${videoId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.likes_count !== undefined) {
+                    // Обновляем количество лайков
+                    document.querySelector(`.likes-count[data-video-id="${videoId}"]`).textContent = data.likes_count;
+
+                    // Меняем текст и иконку кнопки
+                    if (data.liked) {
+                        button.innerHTML = '<i class="bi bi-heart-fill"></i> Убрать лайк';
+                        button.classList.remove('btn-outline-primary');
+                        button.classList.add('btn-outline-danger');
+                    } else {
+                        button.innerHTML = '<i class="bi bi-heart"></i> Лайк';
+                        button.classList.remove('btn-outline-danger');
+                        button.classList.add('btn-outline-primary');
+                    }
+                } else if (data.error) {
+                    alert("Ошибка: " + data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
 {% endblock %}
