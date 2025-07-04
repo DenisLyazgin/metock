@@ -12,10 +12,18 @@
     <style>
         body {
             background-color: #f8f9fa;
+            color: #212529;
+        }
+        .navbar {
+            background-color: #e3f2fd;
         }
         .navbar-brand {
             font-weight: bold;
             font-size: 1.75rem;
+            color: #212529;
+        }
+        .nav-link, .btn-outline-light {
+            color: #212529;
         }
         .video-card {
             box-shadow: 0 4px 12px rgba(0,0,0,0.12);
@@ -23,7 +31,7 @@
             background-color: #fff;
             margin-bottom: 2rem;
             overflow: hidden;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.3s ease;
         }
         .video-card:hover {
             transform: scale(1.02);
@@ -36,22 +44,53 @@
         .video-card .card-body {
             padding: 1.5rem;
         }
-        .comment-list li {
-            margin-bottom: 0.5rem;
-        }
         .footer {
             margin-top: 3rem;
             padding: 1rem 0;
             background-color: #343a40;
             color: #ccc;
             text-align: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-theme {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        body.dark-theme .navbar {
+            background-color: #222;
+        }
+        body.dark-theme .navbar-brand,
+        body.dark-theme .nav-link,
+        body.dark-theme .btn-outline-light {
+            color: #ccc !important;
+        }
+        body.dark-theme .video-card {
+            background-color: #1e1e1e;
+            box-shadow: 0 4px 12px rgba(255,255,255,0.12);
+        }
+        body.dark-theme .video-card video {
+            border-bottom: 1px solid #444;
+        }
+        body.dark-theme .footer {
+            background-color: #121212;
+            color: #888;
+        }
+
+        .form-switch .form-check-input {
+            cursor: pointer;
+        }
+        .form-switch .form-check-label {
+            user-select: none;
+            margin-left: 0.3rem;
+            color: inherit;
         }
     </style>
 
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
+<nav class="navbar navbar-expand-lg mb-4 shadow">
     <div class="container">
         <a class="navbar-brand" href="{% url 'video_view' %}">Metock</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -59,10 +98,22 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
+            <form class="d-flex me-3" action="{% url 'video_view' %}" method="get">
+                <input class="form-control me-2" type="search" name="q" placeholder="Поиск видео" aria-label="Поиск" value="{{ request.GET.q }}">
+                <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+            </form>
+
             <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item me-3 d-flex align-items-center">
+                  <label class="form-check form-switch mb-0" title="Переключить тему">
+                    <input type="checkbox" class="form-check-input" id="theme-toggle-switch" />
+                    <span class="form-check-label">Тёмная тема</span>
+                  </label>
+                </li>
+
                 {% if user.is_authenticated %}
                     <li class="nav-item me-2">
-                        <span class="nav-link text-light">Привет, {{ user.username }}!</span>
+                        <span class="nav-link">Привет, {{ user.username }}!</span>
                     </li>
                     <li class="nav-item me-2">
                         <a href="{% url 'video_create' %}" class="btn btn-primary">Добавить видео</a>
@@ -83,13 +134,6 @@
     </div>
 </nav>
 
-<!-- DEBUG BLOCK -->
-<div class="container mt-3">
-  <div class="alert alert-info">
-    DEBUG: user.is_authenticated = {{ user.is_authenticated }} | user = {{ user }}
-  </div>
-</div>
-
 <div class="container">
     {% block content %}{% endblock %}
 </div>
@@ -101,6 +145,32 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-{% block extra_js %}{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const themeToggleSwitch = document.getElementById('theme-toggle-switch');
+
+    function setTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            themeToggleSwitch.checked = true;
+        } else {
+            document.body.classList.remove('dark-theme');
+            themeToggleSwitch.checked = false;
+        }
+    }
+
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+
+    themeToggleSwitch.addEventListener('change', function() {
+        const theme = this.checked ? 'dark' : 'light';
+        setTheme(theme);
+        localStorage.setItem('theme', theme);
+    });
+});
+</script>
+{% endblock %}
 </body>
 </html>

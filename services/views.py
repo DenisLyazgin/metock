@@ -14,11 +14,16 @@ class VideosListView(ListView):
     context_object_name = 'videos'
 
     def get_queryset(self):
-        videos = super().get_queryset()
-        for video in videos:
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q')
+
+        if query:
+            queryset = queryset.filter(description__icontains=query)
+
+        for video in queryset:
             video.count_views += 1
             video.save()
-        return videos
+        return queryset
 
 
 class VideoCreateView(LoginRequiredMixin, CreateView):
@@ -66,7 +71,7 @@ class VideoEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        print(f"Editing video: {obj.id}")  # <-- появится в твоем терминале
+        print(f"Editing video: {obj.id}")
         return obj
 
     def form_valid(self, form):
@@ -86,4 +91,3 @@ class VideoDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         video = self.get_object()
         return self.request.user == video.creator
-
